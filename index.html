@@ -977,23 +977,40 @@
 
             const CORS_PROXIES = [
                 (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-                (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+                (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+                (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`
             ];
 
-            const fetchTextWithProxyFallback = async (url) => {
+            const fetchWithTimeout = async (url, timeoutMs = 9000) => {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                 try {
-                    const response = await fetch(url);
-                    if (response.ok) {
-                        const text = await response.text();
-                        if (text && text.length > 100) return text;
+                    return await fetch(url, { signal: controller.signal });
+                } finally {
+                    clearTimeout(timeoutId);
+                }
+            };
+
+            const fetchTextWithProxyFallback = async (url) => {
+                // gutenberg.org never sends CORS headers, so a direct browser fetch
+                // will always be blocked there - skip straight to the proxy chain.
+                const knownNoCors = /gutenberg\.org/i.test(url);
+
+                if (!knownNoCors) {
+                    try {
+                        const response = await fetchWithTimeout(url);
+                        if (response.ok) {
+                            const text = await response.text();
+                            if (text && text.length > 100) return text;
+                        }
+                    } catch (error) {
+                        // fall through to proxies
                     }
-                } catch (error) {
-                    // direct fetch blocked (likely CORS) - fall through to proxies
                 }
 
                 for (const buildProxyUrl of CORS_PROXIES) {
                     try {
-                        const response = await fetch(buildProxyUrl(url));
+                        const response = await fetchWithTimeout(buildProxyUrl(url));
                         if (response.ok) {
                             const text = await response.text();
                             if (text && text.length > 100) return text;
@@ -1003,7 +1020,7 @@
                     }
                 }
 
-                throw new Error('Could not fetch the book text right now. Please try another book.');
+                throw new Error('Could not fetch the book text right now (the free proxy services may be busy). Please try another book, or try again in a moment.');
             };
 
             const fetchPopularBooks = async () => {
