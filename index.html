@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typing Practice</title>
+
+<script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"></script>
+
+<style>
+    :root {
+        --primary-color: #2c7d75;
+        --border-color: #e0e0e0;
+        --shadow-color: rgba(0,0,0,0.1);
+        --bg-main: #fcfcfc;
+        --surface: #ffffff;
+        --text-pure: #000000;
+        --text-muted: #555555;
+        --error-color: #d32f2f;
+        --error-bg: #ffebee;
+        --success-bg: #e0f2f1;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-pure);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    #app {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .main-content {
+        padding: 2.5rem 1rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .app-container {
+        width: 100%;
+        max-width: 900px;
+        background-color: var(--surface);
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.04);
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        padding: 30px 40px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-heading {
+        text-align: center;
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-size: 2.2em;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .app-subheading {
+        text-align: center;
+        color: var(--text-muted);
+        margin-bottom: 25px;
+        font-size: 1em;
+    }
+
+    .mode-toggle {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 25px;
+    }
+
+    .mode-btn {
+        background-color: transparent;
+        border: 2px solid var(--text-pure);
+        color: var(--text-pure);
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.85em;
+        transition: all 0.2s ease;
+    }
+
+    .mode-btn.active {
+        background-color: var(--text-pure);
+        color: #fff;
+    }
+
+    .mode-btn:hover:not(.active) {
+        background-color: rgba(0,0,0,0.05);
+    }
+
+    .toggle-divider {
+        width: 1px;
+        height: 22px;
+        background-color: var(--border-color);
+        margin: 0 4px;
+    }
+
+    .sprint-toggle {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .sprint-label {
+        font-size: 0.85em;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-right: 2px;
+    }
+
+    .sprint-btn {
+        background-color: transparent;
+        border: 1.5px solid var(--border-color);
+        color: var(--text-muted);
+        padding: 5px 12px;
+        border-radius: 14px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.78em;
+        transition: all 0.2s ease;
+    }
+
+    .sprint-btn.active {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: #fff;
+    }
+
+    .sprint-btn:hover:not(.active) {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .sprint-timer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 12px;
+        letter-spacing: 1px;
+    }
+
+    .sprint-timer.low-time {
+        color: var(--error-color);
+    }
+
+    .round-icon-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 2px solid var(--text-pure);
+        background-color: transparent;
+        color: var(--text-pure);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .round-icon-btn:hover {
+        background-color: var(--text-pure);
+        color: #fff;
+    }
+
+    .round-icon-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .practice-area {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        transition: all 0.3s ease;
+    }
+
+    .settings-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .icon-btn {
+        background: transparent;
+        border: none;
+        color: var(--primary-color);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9em;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .icon-btn:hover {
+        text-decoration: underline;
+    }
+
+    .typing-box {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 1.4rem;
+        line-height: 1.7;
+        padding: 20px;
+        background: #f8f9fa;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        margin-bottom: 15px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: var(--text-muted);
+        max-height: 45vh;
+        min-height: 100px;
+        overflow-y: auto;
+        position: relative;
+        transition: max-height 0.3s ease;
+    }
+
+    .practice-area.with-keyboard .typing-box {
+        max-height: 20vh;
+    }
+
+    .char-correct {
+        color: var(--primary-color);
+        font-weight: 700;
+        background-color: var(--success-bg);
+        border-radius: 2px;
+    }
+
+    .char-incorrect {
+        color: var(--error-color);
+        text-decoration: underline;
+        background-color: var(--error-bg);
+        border-radius: 2px;
+    }
+
+    .char-pending {
+        color: #999;
+    }
+
+    .char-current {
+        border-bottom: 3px solid var(--text-pure);
+    }
+
+    .user-input {
+        width: 100%;
+        height: 60px;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 1.2rem;
+        padding: 15px;
+        border: 2px solid var(--border-color);
+        border-radius: 6px;
+        resize: none;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        margin-bottom: 20px;
+        color: var(--text-pure);
+        flex-shrink: 0;
+        font-family: inherit;
+    }
+
+    .user-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(44, 125, 117, 0.1);
+    }
+
+    .user-input:disabled {
+        background-color: #f1f1f1;
+        cursor: not-allowed;
+        color: var(--text-muted);
+    }
+
+    .custom-setup-area {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        animation: fadeIn 0.4s ease-out;
+        flex: 1;
+    }
+
+    .wiki-input {
+        height: 55px !important;
+        font-size: 1rem;
+    }
+
+    .book-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        max-height: 360px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .book-card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        padding: 12px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: #ffffff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+    }
+
+    .book-card:hover:not(:disabled) {
+        border-color: var(--primary-color);
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+    }
+
+    .book-card:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .book-title {
+        font-weight: 700;
+        font-size: 0.92em;
+        margin-bottom: 4px;
+        color: var(--text-pure);
+    }
+
+    .book-author {
+        font-size: 0.78em;
+        color: var(--text-muted);
+    }
+
+    .book-loading-note {
+        text-align: center;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.9em;
+    }
+
+    .book-context-label {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85em;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    @media (max-width: 600px) {
+        .book-grid { grid-template-columns: 1fr; max-height: 300px; }
+    }
+
+    .stats-panel {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        border: 1px dashed var(--border-color);
+        animation: fadeIn 0.4s ease-out;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0 15px;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        font-family: "Courier New", Courier, monospace;
+        color: var(--primary-color);
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        margin-top: 8px;
+        font-weight: 600;
+    }
+
+    button.primary-btn {
+        background-color: var(--text-pure);
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 12px 24px;
+        font-size: 1em;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.1s;
+        white-space: nowrap;
+    }
+
+    button.primary-btn:hover:not(:disabled) {
+        background-color: #333;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    button.primary-btn:active:not(:disabled) {
+        transform: scale(0.98);
+    }
+
+    button.primary-btn:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+
+    button.secondary-btn {
+        background-color: transparent;
+        color: var(--text-pure);
+        border: 2px solid var(--text-pure);
+        border-radius: 4px;
+        padding: 10px 22px;
+        font-size: 1em;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s ease, transform 0.1s;
+        white-space: nowrap;
+    }
+
+    button.secondary-btn:hover {
+        background-color: rgba(0,0,0,0.05);
+    }
+
+    button.secondary-btn:active {
+        transform: scale(0.98);
+    }
+
+    .progress-bar-container {
+        width: 100%;
+        height: 6px;
+        background-color: var(--border-color);
+        border-radius: 3px;
+        margin-bottom: 15px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background-color: var(--primary-color);
+        transition: width 0.2s ease;
+    }
+
+    .keyboard-container {
+        width: 100%;
+        background: #fcfcfc;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: auto;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        animation: fadeIn 0.3s ease-out;
+        flex-shrink: 0;
+    }
+
+    .kb-row {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .kb-key {
+        background: #ffffff;
+        border: 1px solid #dcdcdc;
+        border-radius: 4px;
+        height: 48px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-pure);
+        font-family: "Courier New", Courier, monospace;
+        font-size: 0.9rem;
+        transition: all 0.1s ease;
+        user-select: none;
+        box-shadow: 0 2px 0 #e0e0e0;
+    }
+
+    .kb-key.active {
+        background: #eef2f5;
+        transform: translateY(2px);
+        box-shadow: 0 0 0 #e0e0e0;
+    }
+
+    .kb-key.hint {
+        background: var(--success-bg);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        font-weight: 700;
+        box-shadow: 0 2px 0 var(--primary-color), 0 0 8px rgba(44, 125, 117, 0.3);
+    }
+
+    .kb-key.hint.active {
+        transform: translateY(2px);
+        box-shadow: 0 0 0 var(--primary-color);
+    }
+
+    .kb-key-chars {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        line-height: 1.1;
+    }
+
+    .kb-shift-char {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .kb-key.hint .kb-shift-char {
+        color: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+        .keyboard-container, .settings-toolbar { display: none !important; }
+    }
+
+    @media (max-width: 600px) {
+        .app-container { padding: 20px; border: none; box-shadow: none; margin-top: 0; }
+        .typing-box { font-size: 1.1rem; padding: 15px; max-height: 45vh; }
+        .practice-area.with-keyboard .typing-box { max-height: 45vh; }
+        .user-input { font-size: 1rem; padding: 12px; height: 60px; }
+        .stats-panel { gap: 20px; padding: 20px; flex-direction: column; }
+        .stat-value { font-size: 2rem; }
+        button.primary-btn, button.secondary-btn { width: 100%; }
+        .mode-toggle { flex-direction: column; }
+        .toggle-divider { width: 100%; height: 1px; margin: 4px 0; }
+    }
+</style>
+</head>
+<body>
+<div id="app">
+    <main class="main-content">
+        <div class="app-container">
+            <h1 class="app-heading">Typing Practice</h1>
+            <div class="app-subheading">Type with Confidence</div>
+
+            <div class="mode-toggle">
+                <button class="mode-btn" :class="{ 'active': appMode === 'sentence' }" @click="setMode('sentence')">Sentence Practice</button>
+                <button class="mode-btn" :class="{ 'active': appMode === 'paragraph' }" @click="setMode('paragraph')">Paragraph Practice</button>
+                <button class="mode-btn" :class="{ 'active': appMode === 'custom' }" @click="setMode('custom')">Custom Text</button>
+                <button class="mode-btn" :class="{ 'active': appMode === 'wikipedia' }" @click="setMode('wikipedia')">Wikipedia Article</button>
+                <button class="mode-btn" :class="{ 'active': appMode === 'book' }" @click="setMode('book')">Book Excerpt</button>
+
+                <template v-if="showActionButtons">
+                    <div class="toggle-divider"></div>
+                    <button class="round-icon-btn" title="Restart this text" @click="resetPractice">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="1 4 1 10 7 10"></polyline>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                    </button>
+                    <button class="round-icon-btn" title="Go to next text" @click="nextText">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                            <line x1="19" y1="5" x2="19" y2="19"></line>
+                        </svg>
+                    </button>
+                </template>
+            </div>
+
+            <div class="sprint-toggle" v-if="appMode === 'sentence' || appMode === 'paragraph'">
+                <span class="sprint-label">Sprint timer:</span>
+                <button
+                    v-for="opt in sprintDurationOptions"
+                    :key="opt.value"
+                    class="sprint-btn"
+                    :class="{ active: sprintDuration === opt.value }"
+                    :disabled="sprintActive"
+                    @click="setSprintDuration(opt.value)">{{ opt.label }}</button>
+            </div>
+
+            <div v-if="appMode === 'wikipedia' && !wikiModeStarted" class="custom-setup-area">
+                <label style="font-weight: 600; color: var(--text-muted); font-size: 0.9em;">Enter an English Wikipedia URL to practice typing its content:</label>
+                <input
+                    type="text"
+                    class="user-input wiki-input"
+                    v-model="wikiUrl"
+                    placeholder="e.g., https://en.wikipedia.org/wiki/Earth"
+                    @keyup.enter="startWikiPractice">
+                <button class="primary-btn" @click="startWikiPractice" :disabled="isFetchingWiki">
+                    {{ isFetchingWiki ? 'Fetching Article...' : 'Fetch & Practice' }}
+                </button>
+                <div v-if="wikiError" style="color: var(--error-color); margin-top: 5px; font-weight: 500;">{{ wikiError }}</div>
+            </div>
+
+            <div v-else-if="appMode === 'book' && !bookModeStarted" class="custom-setup-area">
+                <label style="font-weight: 600; color: var(--text-muted); font-size: 0.9em;">Pick a popular book from Project Gutenberg to practice typing:</label>
+
+                <div v-if="isFetchingBookList" class="book-loading-note">Loading popular books...</div>
+
+                <div v-else-if="bookListError">
+                    <div style="color: var(--error-color); font-weight: 500; margin-bottom: 10px;">{{ bookListError }}</div>
+                    <button class="secondary-btn" @click="fetchPopularBooks">Retry</button>
+                </div>
+
+                <div v-else class="book-grid">
+                    <button
+                        v-for="book in popularBooks"
+                        :key="book.id"
+                        class="book-card"
+                        :disabled="isFetchingBookText"
+                        @click="startBookPractice(book)">
+                        <span class="book-title">{{ book.title }}</span>
+                        <span class="book-author">{{ book.author }}</span>
+                    </button>
+                </div>
+
+                <div v-if="isFetchingBookText" class="book-loading-note">Fetching book text...</div>
+                <div v-if="bookTextError" style="color: var(--error-color); font-weight: 500;">{{ bookTextError }}</div>
+            </div>
+
+            <div v-else-if="appMode === 'custom' && !customModeStarted" class="custom-setup-area">
+                <textarea
+                    class="user-input"
+                    v-model="customTextDraft"
+                    placeholder="Type or paste your own text here to practice..."
+                    style="height: 160px;"></textarea>
+                <button class="primary-btn" @click="startCustomPractice">Start Custom Practice</button>
+            </div>
+
+            <div v-else class="practice-area" :class="{ 'with-keyboard': showKeyboard }">
+                <div class="settings-toolbar">
+                    <button class="icon-btn" @click="toggleKeyboardVisibility">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                            <line x1="6" y1="8" x2="6" y2="8"></line>
+                            <line x1="10" y1="8" x2="10" y2="8"></line>
+                            <line x1="14" y1="8" x2="14" y2="8"></line>
+                            <line x1="18" y1="8" x2="18" y2="8"></line>
+                            <line x1="6" y1="12" x2="6" y2="12"></line>
+                            <line x1="10" y1="12" x2="10" y2="12"></line>
+                            <line x1="14" y1="12" x2="14" y2="12"></line>
+                            <line x1="18" y1="12" x2="18" y2="12"></line>
+                            <line x1="7" y1="16" x2="17" y2="16"></line>
+                        </svg>
+                        <span v-if="showKeyboard">Hide Keyboard</span>
+                        <span v-else>Show Keyboard</span>
+                    </button>
+                </div>
+
+                <div class="book-context-label" v-if="appMode === 'book' && selectedBook">
+                    📖 {{ selectedBook.title }} — {{ selectedBook.author }}
+                </div>
+
+                <div class="sprint-timer" v-if="sprintEnabled && !isCompleted" :class="{ 'low-time': sprintTimeLeft <= 10 && sprintActive }">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    {{ formattedSprintTime }}
+                </div>
+
+                <div class="progress-bar-container">
+                    <div class="progress-bar" :style="{ width: progressPercentage + '%' }"></div>
+                </div>
+
+                <div class="typing-box" ref="typingBox" @click="focusInput">
+                    <span v-for="(char, index) in currentText" :key="index" :class="getCharClass(index)">{{ char }}</span>
+                </div>
+
+                <textarea
+                    ref="textInput"
+                    class="user-input"
+                    v-model="userInput"
+                    @input="handleInput"
+                    @keydown="handleKeyDown"
+                    @keyup="handleKeyUp"
+                    @blur="clearActiveKeys"
+                    @paste.prevent
+                    spellcheck="false"
+                    placeholder="Start typing here..."
+                    :disabled="isCompleted">
+                </textarea>
+
+                <div class="stats-panel" v-if="isCompleted">
+                    <div class="stat-box">
+                        <span class="stat-value">{{ wpm }}</span>
+                        <span class="stat-label">WPM</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value">{{ cpm }}</span>
+                        <span class="stat-label">CPM</span>
+                    </div>
+
+                    <template v-if="appMode === 'custom'">
+                        <button class="primary-btn" @click="resetPractice">Practice Again</button>
+                        <button class="secondary-btn" @click="editCustomText">Edit Text</button>
+                    </template>
+                    <template v-else-if="appMode === 'wikipedia'">
+                        <button class="primary-btn" @click="resetPractice">Practice Again</button>
+                        <button class="secondary-btn" @click="wikiModeStarted = false">New Article</button>
+                    </template>
+                    <template v-else-if="appMode === 'book'">
+                        <button class="primary-btn" @click="resetPractice">Practice Again</button>
+                        <button class="secondary-btn" @click="bookModeStarted = false">Choose Another Book</button>
+                    </template>
+                    <template v-else>
+                        <button class="primary-btn" @click="nextText">{{ sprintEnabled ? 'Try Sprint Again' : 'Next Practice' }}</button>
+                    </template>
+                </div>
+
+                <div class="keyboard-container" v-show="showKeyboard">
+                    <div class="kb-row" v-for="(row, rIndex) in keyboardLayoutData" :key="rIndex">
+                        <div class="kb-key"
+                             v-for="key in row"
+                             :key="key.code"
+                             :style="{ flexGrow: key.flex || 1 }"
+                             :class="{
+                                 'active': activeKeysMap[key.code],
+                                 'hint': nextKeyHint && (nextKeyHint.code === key.code || (nextKeyHint.shift && (key.code === 'ShiftLeft' || key.code === 'ShiftRight')))
+                             }">
+                             <span v-if="key.label">{{ key.label }}</span>
+                             <div v-else class="kb-key-chars">
+                                 <span class="kb-shift-char">{{ key.shift }}</span>
+                                 <span class="kb-base-char">{{ key.base }}</span>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const { createApp, ref, computed, nextTick } = Vue;
+
+    createApp({
+        setup() {
+            const sentences = [
+                "The only way to do great work is to love what you do.",
+                "Believe you can, and you're halfway there.",
+                "Success is not final, failure is not fatal: It is the courage to continue that counts.",
+                "The future belongs to those who believe in the beauty of their dreams.",
+                "The best way to predict the future is to create it.",
+                "Don't watch the clock; do what it does. Keep going.",
+                "The only limit to our realization of tomorrow will be our doubts of today.",
+                "You are never too old to set another goal or to dream a new dream.",
+                "The harder I work, the luckier I get.",
+                "Your time is limited, don't waste it living someone else's life.",
+                "Everything you can imagine is real.",
+                "Whatever you are, be a good one.",
+                "Make each day your masterpiece.",
+                "Happiness is not something ready made. It comes from your own actions.",
+                "Keep your face always toward the sunshine, and shadows will fall behind you.",
+                "You miss 100% of the shots you don't take.",
+                "The biggest risk is not taking any risk.",
+                "Every accomplishment starts with the decision to try.",
+                "Opportunities don't happen. You create them.",
+                "It does not matter how slowly you go as long as you do not stop."
+            ];
+
+            const paragraphs = [
+                "Believe in yourself and your abilities. You have the power to achieve greatness. Success starts with a strong belief in your potential. Trust in your skills, talents, and unique qualities. Embrace challenges as stepping stones towards personal growth. With perseverance and dedication, you can turn your dreams into reality.",
+                "Life is a journey filled with ups and downs, twists and turns. It's in the face of adversity that true strength is revealed. Embrace challenges as opportunities for growth. Every setback is a chance to learn, evolve, and become a better version of yourself. Stay resilient, stay focused, and keep pushing forward. You are capable of overcoming any obstacle that comes your way.",
+                "Dream big, for dreams have the power to shape your reality. Dare to imagine the life you desire, and then take inspired action to make it a reality. Set ambitious goals and break them down into manageable steps. Stay committed, stay disciplined, and stay focused. Your perseverance and hard work will propel you towards success.",
+                "Don't be afraid of failure, for it is an essential part of the journey towards success. Each failure is an opportunity to learn, grow, and improve. Embrace your mistakes and use them as stepping stones to greater achievements. Success is not defined by the absence of failure, but by the ability to rise after each fall. Stay resilient, stay determined, and keep moving forward.",
+                "You have a unique purpose in this world, a set of talents and passions that are waiting to be unleashed. Embrace your authenticity and let your true self shine. When you align your actions with your values and follow your heart, you create a life of fulfillment and meaning. Trust in your inner voice, believe in your dreams, and pursue them with unwavering determination.",
+                "Life is too short to settle for mediocrity. Don't be afraid to step out of your comfort zone and pursue your wildest ambitions. Take risks, embrace uncertainty, and push past your limits. Success lies just beyond your comfort zone. With every challenge you overcome and every fear you conquer, you grow stronger and more resilient. Believe in yourself, for you are capable of achieving greatness.",
+                "Every day is a new opportunity to make a positive impact. Use your words and actions to inspire and uplift others. Kindness, compassion, and empathy have the power to change lives. Small gestures of love and support can create ripples of positivity that extend far beyond your immediate reach. Be a source of light in the world, and watch as it transforms before your eyes.",
+                "Success is not a destination; it's a journey. Enjoy the process, savor the small victories, and learn from the setbacks. Your path to success will be filled with twists and turns, but it's in the journey that you discover your true strength and resilience. Embrace the challenges, for they are the catalysts for growth and self-discovery. Trust in yourself and the journey that lies ahead.",
+                "Embrace the power of gratitude and appreciation. Each day, take a moment to reflect on the blessings in your life. Express gratitude for the simple things that often go unnoticed. Gratitude opens your heart to abundance and allows you to find joy in the present moment. By cultivating a mindset of gratitude, you attract more of what brings you happiness and fulfillment.",
+                "Your mindset is the key to unlocking your full potential. Believe in the power of positive thinking and the incredible impact it can have on your life. Cultivate a mindset of abundance, possibility, and resilience. When faced with challenges, choose to see them as opportunities for growth. Shift your focus from limitations to possibilities, and watch as your life transforms in remarkable ways."
+            ];
+
+            const keyboardLayoutData = [
+                [
+                    { code: 'Backquote', base: '`', shift: '~' }, { code: 'Digit1', base: '1', shift: '!' }, { code: 'Digit2', base: '2', shift: '@' },
+                    { code: 'Digit3', base: '3', shift: '#' }, { code: 'Digit4', base: '4', shift: '$' }, { code: 'Digit5', base: '5', shift: '%' },
+                    { code: 'Digit6', base: '6', shift: '^' }, { code: 'Digit7', base: '7', shift: '&' }, { code: 'Digit8', base: '8', shift: '*' },
+                    { code: 'Digit9', base: '9', shift: '(' }, { code: 'Digit0', base: '0', shift: ')' }, { code: 'Minus', base: '-', shift: '_' },
+                    { code: 'Equal', base: '=', shift: '+' }, { code: 'Backspace', label: 'Backspace', flex: 1.5 }
+                ],
+                [
+                    { code: 'Tab', label: 'Tab', flex: 1.5 }, { code: 'KeyQ', base: 'q', shift: 'Q' }, { code: 'KeyW', base: 'w', shift: 'W' },
+                    { code: 'KeyE', base: 'e', shift: 'E' }, { code: 'KeyR', base: 'r', shift: 'R' }, { code: 'KeyT', base: 't', shift: 'T' },
+                    { code: 'KeyY', base: 'y', shift: 'Y' }, { code: 'KeyU', base: 'u', shift: 'U' }, { code: 'KeyI', base: 'i', shift: 'I' },
+                    { code: 'KeyO', base: 'o', shift: 'O' }, { code: 'KeyP', base: 'p', shift: 'P' }, { code: 'BracketLeft', base: '[', shift: '{' },
+                    { code: 'BracketRight', base: ']', shift: '}' }, { code: 'Backslash', base: '\\', shift: '|', flex: 1.5 }
+                ],
+                [
+                    { code: 'CapsLock', label: 'Caps', flex: 1.8 }, { code: 'KeyA', base: 'a', shift: 'A' }, { code: 'KeyS', base: 's', shift: 'S' },
+                    { code: 'KeyD', base: 'd', shift: 'D' }, { code: 'KeyF', base: 'f', shift: 'F' }, { code: 'KeyG', base: 'g', shift: 'G' },
+                    { code: 'KeyH', base: 'h', shift: 'H' }, { code: 'KeyJ', base: 'j', shift: 'J' }, { code: 'KeyK', base: 'k', shift: 'K' },
+                    { code: 'KeyL', base: 'l', shift: 'L' }, { code: 'Semicolon', base: ';', shift: ':' }, { code: 'Quote', base: "'", shift: '"' },
+                    { code: 'Enter', label: 'Enter', flex: 1.8 }
+                ],
+                [
+                    { code: 'ShiftLeft', label: 'Shift', flex: 2.2 }, { code: 'KeyZ', base: 'z', shift: 'Z' }, { code: 'KeyX', base: 'x', shift: 'X' },
+                    { code: 'KeyC', base: 'c', shift: 'C' }, { code: 'KeyV', base: 'v', shift: 'V' }, { code: 'KeyB', base: 'b', shift: 'B' },
+                    { code: 'KeyN', base: 'n', shift: 'N' }, { code: 'KeyM', base: 'm', shift: 'M' }, { code: 'Comma', base: ',', shift: '<' },
+                    { code: 'Period', base: '.', shift: '>' }, { code: 'Slash', base: '/', shift: '?' }, { code: 'ShiftRight', label: 'Shift', flex: 2.2 }
+                ],
+                [
+                    { code: 'Space', label: 'Space', flex: 6 }
+                ]
+            ];
+
+            const charToCodeMap = {};
+            keyboardLayoutData.forEach(row => {
+                row.forEach(key => {
+                    if (key.base) charToCodeMap[key.base] = { code: key.code, shift: false };
+                    if (key.shift) charToCodeMap[key.shift] = { code: key.code, shift: true };
+                });
+            });
+            charToCodeMap[' '] = { code: 'Space', shift: false };
+            charToCodeMap['\n'] = { code: 'Enter', shift: false };
+            charToCodeMap['\r'] = { code: 'Enter', shift: false };
+
+            const appMode = ref('sentence');
+            const customTextDraft = ref('');
+            const customModeStarted = ref(false);
+
+            const wikiUrl = ref('https://en.wikipedia.org/wiki/Earth');
+            const wikiModeStarted = ref(false);
+            const isFetchingWiki = ref(false);
+            const wikiError = ref('');
+
+            const popularBooks = ref([]);
+            const isFetchingBookList = ref(false);
+            const bookListError = ref('');
+            const bookModeStarted = ref(false);
+            const isFetchingBookText = ref(false);
+            const bookTextError = ref('');
+            const selectedBook = ref(null);
+
+            const showKeyboard = ref(false);
+            const currentText = ref('');
+            const userInput = ref('');
+            const textInput = ref(null);
+            const typingBox = ref(null);
+
+            const activeKeysMap = ref({});
+            const startTime = ref(null);
+            const endTime = ref(null);
+            const isCompleted = ref(false);
+            const wpm = ref(0);
+            const cpm = ref(0);
+
+            const sprintDurationOptions = [
+                { label: 'Off', value: 0 },
+                { label: '1 min', value: 60 },
+                { label: '2 min', value: 120 },
+                { label: '5 min', value: 300 }
+            ];
+            const sprintDuration = ref(0);
+            const sprintTimeLeft = ref(0);
+            const sprintActive = ref(false);
+            const totalCharsTyped = ref(0);
+            let sprintTimerId = null;
+
+            const sprintEnabled = computed(() => {
+                return sprintDuration.value > 0 && (appMode.value === 'sentence' || appMode.value === 'paragraph');
+            });
+
+            const formattedSprintTime = computed(() => {
+                const m = Math.floor(sprintTimeLeft.value / 60).toString().padStart(2, '0');
+                const s = (sprintTimeLeft.value % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            });
+
+            const showActionButtons = computed(() => {
+                if (appMode.value === 'custom') return customModeStarted.value;
+                if (appMode.value === 'wikipedia') return wikiModeStarted.value;
+                if (appMode.value === 'book') return bookModeStarted.value;
+                return true;
+            });
+
+            const getCharClass = (index) => {
+                if (index === userInput.value.length) return 'char-current';
+                if (index > userInput.value.length) return 'char-pending';
+                return userInput.value[index] === currentText.value[index] ? 'char-correct' : 'char-incorrect';
+            };
+
+            const progressPercentage = computed(() => {
+                if (sprintEnabled.value) {
+                    if (!sprintDuration.value) return 0;
+                    return Math.min(100, ((sprintDuration.value - sprintTimeLeft.value) / sprintDuration.value) * 100);
+                }
+                if (!currentText.value) return 0;
+                return Math.min(100, (userInput.value.length / currentText.value.length) * 100);
+            });
+
+            const nextKeyHint = computed(() => {
+                if (isCompleted.value || userInput.value.length >= currentText.value.length) return null;
+                const nextChar = currentText.value[userInput.value.length];
+                return charToCodeMap[nextChar] || null;
+            });
+
+            const startWikiPractice = async () => {
+                const url = wikiUrl.value.trim();
+                wikiError.value = '';
+
+                if (!url.startsWith("https://en.wikipedia.org/wiki/")) {
+                    wikiError.value = "Invalid URL. Please enter a valid Wikipedia URL starting with https://en.wikipedia.org/wiki/";
+                    return;
+                }
+
+                const title = url.split("/").pop();
+                isFetchingWiki.value = true;
+
+                try {
+                    const WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php";
+                    const response = await fetch(
+                        `${WIKIPEDIA_API_URL}?action=query&format=json&prop=extracts&titles=${title}&explaintext=true&origin=*`
+                    );
+                    const data = await response.json();
+                    const pageId = Object.keys(data.query.pages)[0];
+                    const content = data.query.pages[pageId]?.extract;
+
+                    if (!content) {
+                        throw new Error("No content found for the specified title.");
+                    }
+
+                    let finalContent = content.trim();
+                    if (finalContent.length > 4000) {
+                        finalContent = finalContent.substring(0, 4000) + "\n\n[Text truncated for typing practice session...]";
+                    }
+
+                    currentText.value = finalContent;
+                    wikiModeStarted.value = true;
+                    resetPractice();
+                } catch (error) {
+                    wikiError.value = `Error: ${error.message}`;
+                } finally {
+                    isFetchingWiki.value = false;
+                }
+            };
+
+            const fetchPopularBooks = async () => {
+                isFetchingBookList.value = true;
+                bookListError.value = '';
+                try {
+                    const response = await fetch('https://gutendex.com/books/?languages=en');
+                    if (!response.ok) throw new Error('Failed to load the book list.');
+                    const data = await response.json();
+                    const results = (data.results || []).filter(b =>
+                        Object.keys(b.formats || {}).some(k => k.startsWith('text/plain'))
+                    );
+                    popularBooks.value = results.slice(0, 20).map(b => ({
+                        id: b.id,
+                        title: b.title,
+                        author: (b.authors && b.authors.length > 0) ? b.authors[0].name : 'Unknown Author',
+                        formats: b.formats
+                    }));
+                    if (popularBooks.value.length === 0) {
+                        bookListError.value = 'No readable books were found. Please try again.';
+                    }
+                } catch (error) {
+                    bookListError.value = 'Could not load the book list. Please check your connection and try again.';
+                } finally {
+                    isFetchingBookList.value = false;
+                }
+            };
+
+            const startBookPractice = async (book) => {
+                bookTextError.value = '';
+                isFetchingBookText.value = true;
+                try {
+                    const formatKey = Object.keys(book.formats).find(k => k.startsWith('text/plain'));
+                    if (!formatKey) throw new Error('Plain text is not available for this book.');
+
+                    const response = await fetch(book.formats[formatKey]);
+                    if (!response.ok) throw new Error('Failed to fetch the book text.');
+                    let text = await response.text();
+
+                    const startMatch = text.match(/\*\*\*\s*START OF (THE|THIS) PROJECT GUTENBERG EBOOK[^*]*\*\*\*/i);
+                    const endMatch = text.match(/\*\*\*\s*END OF (THE|THIS) PROJECT GUTENBERG EBOOK[^*]*\*\*\*/i);
+                    if (startMatch) text = text.slice(startMatch.index + startMatch[0].length);
+                    if (endMatch) text = text.slice(0, text.indexOf(endMatch[0]));
+
+                    text = text.trim().replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+
+                    if (!text) {
+                        throw new Error('This book looked empty after cleanup. Please try another one.');
+                    }
+
+                    if (text.length > 4000) {
+                        text = text.substring(0, 4000) + "\n\n[Text truncated for typing practice session...]";
+                    }
+
+                    currentText.value = text;
+                    selectedBook.value = book;
+                    bookModeStarted.value = true;
+                    resetPractice();
+                } catch (error) {
+                    bookTextError.value = `Error: ${error.message}`;
+                } finally {
+                    isFetchingBookText.value = false;
+                }
+            };
+
+            const handleInput = () => {
+                if (!startTime.value && userInput.value.length > 0) {
+                    startTime.value = Date.now();
+                    if (sprintEnabled.value) {
+                        startSprintCountdown();
+                    }
+                }
+
+                if (userInput.value.length > currentText.value.length) {
+                    userInput.value = userInput.value.slice(0, currentText.value.length);
+                }
+
+                if (userInput.value === currentText.value) {
+                    if (sprintActive.value) {
+                        totalCharsTyped.value += userInput.value.length;
+                        loadNextSprintText();
+                    } else {
+                        isCompleted.value = true;
+                        endTime.value = Date.now();
+                        calculateStats();
+                    }
+                }
+
+                nextTick(() => {
+                    const currentChar = document.querySelector('.char-current');
+                    if (currentChar && typingBox.value) {
+                        const boxRect = typingBox.value.getBoundingClientRect();
+                        const charRect = currentChar.getBoundingClientRect();
+
+                        if (charRect.bottom > boxRect.bottom - 40 || charRect.top < boxRect.top + 40) {
+                            currentChar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                });
+            };
+
+            const handleKeyDown = (e) => {
+                activeKeysMap.value[e.code] = true;
+            };
+
+            const handleKeyUp = (e) => {
+                activeKeysMap.value[e.code] = false;
+            };
+
+            const clearActiveKeys = () => {
+                activeKeysMap.value = {};
+            };
+
+            const calculateStats = () => {
+                const timeElapsedMs = endTime.value - startTime.value;
+                const timeElapsedMinutes = timeElapsedMs / 60000;
+                const charsCount = currentText.value.length;
+
+                cpm.value = Math.round(charsCount / timeElapsedMinutes) || 0;
+                wpm.value = Math.round((charsCount / 5) / timeElapsedMinutes) || 0;
+            };
+
+            const startSprintCountdown = () => {
+                sprintActive.value = true;
+                sprintTimeLeft.value = sprintDuration.value;
+                clearInterval(sprintTimerId);
+                sprintTimerId = setInterval(() => {
+                    sprintTimeLeft.value -= 1;
+                    if (sprintTimeLeft.value <= 0) {
+                        finishSprint();
+                    }
+                }, 1000);
+            };
+
+            const finishSprint = () => {
+                clearInterval(sprintTimerId);
+                sprintTimerId = null;
+                sprintActive.value = false;
+                sprintTimeLeft.value = 0;
+                totalCharsTyped.value += userInput.value.length;
+                isCompleted.value = true;
+                endTime.value = Date.now();
+
+                const minutes = sprintDuration.value / 60;
+                cpm.value = Math.round(totalCharsTyped.value / minutes) || 0;
+                wpm.value = Math.round((totalCharsTyped.value / 5) / minutes) || 0;
+            };
+
+            const loadNextSprintText = () => {
+                const sourceArray = appMode.value === 'sentence' ? sentences : paragraphs;
+                let nextStr = currentText.value;
+                while (nextStr === currentText.value) {
+                    nextStr = sourceArray[Math.floor(Math.random() * sourceArray.length)];
+                }
+                currentText.value = nextStr;
+                userInput.value = '';
+                nextTick(() => {
+                    if (typingBox.value) {
+                        typingBox.value.scrollTop = 0;
+                    }
+                });
+            };
+
+            const setSprintDuration = (value) => {
+                sprintDuration.value = value;
+                resetPractice();
+            };
+
+            const nextText = () => {
+                if (appMode.value === 'custom' || appMode.value === 'wikipedia' || appMode.value === 'book') {
+                    resetPractice();
+                    return;
+                }
+                if (sprintActive.value) {
+                    totalCharsTyped.value += userInput.value.length;
+                    loadNextSprintText();
+                    return;
+                }
+                const sourceArray = appMode.value === 'sentence' ? sentences : paragraphs;
+                let nextStr = currentText.value;
+                while (nextStr === currentText.value) {
+                    const randomIndex = Math.floor(Math.random() * sourceArray.length);
+                    nextStr = sourceArray[randomIndex];
+                }
+                currentText.value = nextStr;
+                resetPractice();
+            };
+
+            const resetPractice = () => {
+                userInput.value = '';
+                startTime.value = null;
+                endTime.value = null;
+                isCompleted.value = false;
+                wpm.value = 0;
+                cpm.value = 0;
+                clearActiveKeys();
+
+                clearInterval(sprintTimerId);
+                sprintTimerId = null;
+                sprintActive.value = false;
+                totalCharsTyped.value = 0;
+                sprintTimeLeft.value = sprintDuration.value;
+
+                focusInput();
+
+                if (typingBox.value) {
+                    typingBox.value.scrollTop = 0;
+                }
+            };
+
+            const setMode = (mode) => {
+                if (appMode.value !== mode) {
+                    appMode.value = mode;
+                    if (mode === 'custom') {
+                        customModeStarted.value = false;
+                    } else if (mode === 'wikipedia') {
+                        wikiModeStarted.value = false;
+                    } else if (mode === 'book') {
+                        bookModeStarted.value = false;
+                        if (popularBooks.value.length === 0 && !isFetchingBookList.value) {
+                            fetchPopularBooks();
+                        }
+                    } else {
+                        nextText();
+                    }
+                }
+            };
+
+            const startCustomPractice = () => {
+                const text = customTextDraft.value.trim();
+                if (text.length > 0) {
+                    currentText.value = text;
+                    customModeStarted.value = true;
+                    resetPractice();
+                }
+            };
+
+            const editCustomText = () => {
+                customModeStarted.value = false;
+            };
+
+            const focusInput = () => {
+                const inSetup = (appMode.value === 'custom' && !customModeStarted.value) ||
+                                (appMode.value === 'wikipedia' && !wikiModeStarted.value) ||
+                                (appMode.value === 'book' && !bookModeStarted.value);
+
+                if (!isCompleted.value && textInput.value && !inSetup) {
+                    nextTick(() => {
+                        textInput.value.focus();
+                    });
+                }
+            };
+
+            const toggleKeyboardVisibility = () => {
+                showKeyboard.value = !showKeyboard.value;
+                focusInput();
+            };
+
+            nextText();
+
+            return {
+                appMode, currentText, userInput, textInput, typingBox, isCompleted, wpm, cpm,
+                customTextDraft, customModeStarted,
+                wikiUrl, wikiModeStarted, isFetchingWiki, wikiError,
+                popularBooks, isFetchingBookList, bookListError,
+                bookModeStarted, isFetchingBookText, bookTextError, selectedBook,
+                showKeyboard, keyboardLayoutData, activeKeysMap, nextKeyHint,
+                showActionButtons,
+
+                sprintDurationOptions, sprintDuration, sprintTimeLeft, sprintActive,
+                sprintEnabled, formattedSprintTime, setSprintDuration,
+
+                getCharClass, progressPercentage, handleInput, handleKeyDown, handleKeyUp, clearActiveKeys,
+                nextText, setMode, focusInput, startCustomPractice, editCustomText, startWikiPractice,
+                fetchPopularBooks, startBookPractice, resetPractice,
+                toggleKeyboardVisibility
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
