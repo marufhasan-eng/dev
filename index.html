@@ -975,6 +975,37 @@
                 }
             };
 
+            const CORS_PROXIES = [
+                (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+            ];
+
+            const fetchTextWithProxyFallback = async (url) => {
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const text = await response.text();
+                        if (text && text.length > 100) return text;
+                    }
+                } catch (error) {
+                    // direct fetch blocked (likely CORS) - fall through to proxies
+                }
+
+                for (const buildProxyUrl of CORS_PROXIES) {
+                    try {
+                        const response = await fetch(buildProxyUrl(url));
+                        if (response.ok) {
+                            const text = await response.text();
+                            if (text && text.length > 100) return text;
+                        }
+                    } catch (error) {
+                        // try the next proxy
+                    }
+                }
+
+                throw new Error('Could not fetch the book text right now. Please try another book.');
+            };
+
             const fetchPopularBooks = async () => {
                 isFetchingBookList.value = true;
                 bookListError.value = '';
@@ -1008,9 +1039,7 @@
                     const formatKey = Object.keys(book.formats).find(k => k.startsWith('text/plain'));
                     if (!formatKey) throw new Error('Plain text is not available for this book.');
 
-                    const response = await fetch(book.formats[formatKey]);
-                    if (!response.ok) throw new Error('Failed to fetch the book text.');
-                    let text = await response.text();
+                    let text = await fetchTextWithProxyFallback(book.formats[formatKey]);
 
                     const startMatch = text.match(/\*\*\*\s*START OF (THE|THIS) PROJECT GUTENBERG EBOOK[^*]*\*\*\*/i);
                     const endMatch = text.match(/\*\*\*\s*END OF (THE|THIS) PROJECT GUTENBERG EBOOK[^*]*\*\*\*/i);
